@@ -12,14 +12,16 @@ export default function ChatApp() {
     const [recipient, setRecipient] = useState("");
 
     useEffect(() => {
-        const fetchMessages = () => {
-            gun.get("web3chat").map().on((msg, id) => {
-                if (msg.recipient === account || msg.sender === account) {
-                    setMessages(prev => [...prev, msg]);
-                }
-            });
-        };
-        fetchMessages();
+        if (!account) return;
+        const chatRoom = gun.get(`web3chat-${account}`);
+        chatRoom.map().on((msg, id) => {
+            if (msg && (msg.recipient === account || msg.sender === account)) {
+                setMessages(prev => {
+                    const exists = prev.find(m => m.timestamp === msg.timestamp);
+                    return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
+                });
+            }
+        });
     }, [account]);
 
     const connectWallet = async () => {
@@ -35,7 +37,8 @@ export default function ChatApp() {
     const sendMessage = () => {
         if (message.trim() === "" || recipient.trim() === "") return;
         const newMessage = { sender: account, recipient, text: message, timestamp: Date.now() };
-        gun.get("web3chat").set(newMessage);
+        gun.get(`web3chat-${recipient}`).set(newMessage);
+        gun.get(`web3chat-${account}`).set(newMessage);
         setMessage("");
     };
 
@@ -47,6 +50,15 @@ export default function ChatApp() {
                         <h1 className="text-xl font-bold">Web3 Chat</h1>
                         <span className="text-green-400">{account}</span>
                     </div>
+                    <div className="p-4">
+                        <input 
+                            type="text"
+                            className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                            placeholder="Masukkan alamat penerima"
+                            value={recipient}
+                            onChange={(e) => setRecipient(e.target.value)}
+                        />
+                    </div>
                     <div className="flex flex-col flex-1 overflow-y-auto p-4">
                         {messages.map((msg, index) => (
                             <div key={index} className={`mb-2 p-2 rounded-lg max-w-xs ${msg.sender === account ? 'bg-blue-500 ml-auto' : 'bg-gray-600'}` }>
@@ -54,15 +66,6 @@ export default function ChatApp() {
                                 <span>{msg.text}</span>
                             </div>
                         ))}
-                    </div>
-                    <div className="p-4 border-t border-gray-600 flex">
-                        <input 
-                            type="text"
-                            className="flex-1 p-2 rounded bg-gray-700 text-white"
-                            placeholder="Masukkan alamat penerima"
-                            value={recipient}
-                            onChange={(e) => setRecipient(e.target.value)}
-                        />
                     </div>
                     <div className="p-4 border-t border-gray-600 flex">
                         <input 
