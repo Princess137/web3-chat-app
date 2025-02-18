@@ -12,17 +12,28 @@ export default function ChatApp() {
     const [recipient, setRecipient] = useState("");
 
     useEffect(() => {
-        if (!account) return;
-        const chatRoom = gun.get(`web3chat-${account}`);
-        chatRoom.map().on((msg, id) => {
-            if (msg && msg.text && (msg.recipient === account || msg.sender === account)) {
+        if (!account || !recipient) return;
+        const chatKey1 = `web3chat-${account}-${recipient}`;
+        const chatKey2 = `web3chat-${recipient}-${account}`;
+
+        gun.get(chatKey1).map().on((msg, id) => {
+            if (msg && msg.text) {
                 setMessages(prev => {
                     const exists = prev.find(m => m.timestamp === msg.timestamp);
                     return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
                 });
             }
         });
-    }, [account]);
+
+        gun.get(chatKey2).map().on((msg, id) => {
+            if (msg && msg.text) {
+                setMessages(prev => {
+                    const exists = prev.find(m => m.timestamp === msg.timestamp);
+                    return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
+                });
+            }
+        });
+    }, [account, recipient]);
 
     const connectWallet = async () => {
         if (window.ethereum) {
@@ -36,14 +47,15 @@ export default function ChatApp() {
 
     const sendMessage = () => {
         if (!message.trim() || !recipient.trim()) return;
+        const chatKey = `web3chat-${account}-${recipient}`;
         const newMessage = { sender: account, recipient, text: message, timestamp: Date.now() };
-        gun.get(`web3chat-${recipient}`).set(newMessage);
-        gun.get(`web3chat-${account}`).set(newMessage);
+        gun.get(chatKey).set(newMessage);
         setMessage("");
     };
 
     const clearChat = () => {
-        gun.get(`web3chat-${account}`).put(null);
+        gun.get(`web3chat-${account}-${recipient}`).put(null);
+        gun.get(`web3chat-${recipient}-${account}`).put(null);
         setMessages([]);
     };
 
