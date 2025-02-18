@@ -1,16 +1,19 @@
-const MessageList = ({ messages, account }) => {
+const ContactList = ({ contacts, setRecipient, deleteContact }) => {
     return (
-        <div className="flex flex-col flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900">
-            {messages.length > 0 ? messages.map((msg, index) => (
-                <div key={index} className={`p-3 rounded-lg max-w-xs text-sm ${msg.sender === account ? 'bg-blue-500 ml-auto' : 'bg-gray-600'}`}>
-                    <span className="block font-bold text-xs text-gray-300">{msg.sender === account ? "Anda" : msg.sender}</span>
-                    <span>{msg.text}</span>
-                </div>
-            )) : (
-                <p className="text-gray-400 text-center">Belum ada pesan</p>
-            )}
+        <div className="w-1/3 border-r border-gray-700 p-4 overflow-y-auto">
+            <h2 className="text-lg font-bold mb-2">Kontak</h2>
+            <ul className="space-y-2 mt-4">
+                {contacts.length > 0 ? contacts.map((contact, index) => (
+                    <li key={index} className="flex justify-between p-2 rounded cursor-pointer hover:bg-gray-600"
+                        onClick={() => setRecipient(contact.address)}>
+                        <span>{contact.name} ({contact.address})</span>
+                        <button className="text-red-500 text-sm hover:text-red-700 ml-2"
+                            onClick={(e) => { e.stopPropagation(); deleteContact(contact.address); }}>Hapus</button>
+                    </li>
+                )) : <p className="text-gray-400">Belum ada kontak</p>}
+            </ul>
         </div>
     );
 };
 
-export default MessageList;
+export default ContactList;
