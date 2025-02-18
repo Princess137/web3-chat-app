@@ -12,8 +12,8 @@ Web3 Chat App adalah aplikasi chat berbasis web yang terdesentralisasi menggunak
 ## 📦 Instalasi
 1. Clone repositori ini:
    ```sh
-   git clone https://github.com/username/repo-name.git
-   cd repo-name
+   git clone https://github.com/Princess137/web3-chat-app.git
+   cd web3-chat-app
    ```
 2. Install dependensi:
    ```sh
