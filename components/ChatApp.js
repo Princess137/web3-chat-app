@@ -11,6 +11,7 @@ export default function ChatApp() {
     const [messages, setMessages] = useState([]);
     const [recipient, setRecipient] = useState("");
     const [contacts, setContacts] = useState([]);
+    const [contactName, setContactName] = useState("");
 
     const refreshChat = () => {
         setMessages([]);
@@ -40,7 +41,7 @@ export default function ChatApp() {
         if (!account) return;
         const contactsKey = `contacts-${account}`;
         gun.get(contactsKey).map().on((contact) => {
-            if (contact && !contacts.includes(contact)) {
+            if (contact && !contacts.some(c => c.address === contact.address)) {
                 setContacts(prev => [...prev, contact]);
             }
         });
@@ -73,9 +74,11 @@ export default function ChatApp() {
     };
 
     const saveContact = () => {
-        if (!recipient.trim() || contacts.includes(recipient)) return;
-        gun.get(`contacts-${account}`).set(recipient);
-        setContacts(prev => [...prev, recipient]);
+        if (!recipient.trim() || !contactName.trim() || contacts.some(c => c.address === recipient)) return;
+        const newContact = { address: recipient, name: contactName };
+        gun.get(`contacts-${account}`).set(newContact);
+        setContacts(prev => [...prev, newContact]);
+        setContactName("");
     };
 
     const clearChat = () => {
@@ -101,14 +104,21 @@ export default function ChatApp() {
                             value={recipient}
                             onChange={(e) => setRecipient(e.target.value)}
                         />
+                        <input 
+                            type="text"
+                            className="w-full p-2 rounded bg-gray-700 text-white mb-2 border border-gray-600"
+                            placeholder="Nama kontak"
+                            value={contactName}
+                            onChange={(e) => setContactName(e.target.value)}
+                        />
                         <button className="w-full p-2 bg-green-600 rounded mt-2" onClick={saveContact}>Simpan Kontak</button>
                     </div>
                     <div className="p-4">
                         <h2 className="text-lg font-bold mb-2">Kontak Tersimpan</h2>
                         <ul className="space-y-2">
                             {contacts.map((contact, index) => (
-                                <li key={index} className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => setRecipient(contact)}>
-                                    {contact}
+                                <li key={index} className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => setRecipient(contact.address)}>
+                                    {contact.name} ({contact.address})
                                 </li>
                             ))}
                         </ul>
