@@ -10,29 +10,44 @@ export default function ChatApp() {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [recipient, setRecipient] = useState("");
+    const [contacts, setContacts] = useState([]);
+
+    const refreshChat = () => {
+        setMessages([]);
+        if (account && recipient) {
+            const chatKey = `web3chat-${account}-${recipient}`;
+            const reverseChatKey = `web3chat-${recipient}-${account}`;
+            gun.get(chatKey).map().once((msg) => {
+                if (msg && msg.text) {
+                    setMessages(prev => {
+                        const exists = prev.find(m => m.timestamp === msg.timestamp);
+                        return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
+                    });
+                }
+            });
+            gun.get(reverseChatKey).map().once((msg) => {
+                if (msg && msg.text) {
+                    setMessages(prev => {
+                        const exists = prev.find(m => m.timestamp === msg.timestamp);
+                        return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
+                    });
+                }
+            });
+        }
+    };
 
     useEffect(() => {
-        if (!account || !recipient) return;
-        const chatKey1 = `web3chat-${account}-${recipient}`;
-        const chatKey2 = `web3chat-${recipient}-${account}`;
-
-        gun.get(chatKey1).map().on((msg, id) => {
-            if (msg && msg.text) {
-                setMessages(prev => {
-                    const exists = prev.find(m => m.timestamp === msg.timestamp);
-                    return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
-                });
+        if (!account) return;
+        const contactsKey = `contacts-${account}`;
+        gun.get(contactsKey).map().on((contact, id) => {
+            if (contact && !contacts.includes(contact)) {
+                setContacts(prev => [...prev, contact]);
             }
         });
+    }, [account]);
 
-        gun.get(chatKey2).map().on((msg, id) => {
-            if (msg && msg.text) {
-                setMessages(prev => {
-                    const exists = prev.find(m => m.timestamp === msg.timestamp);
-                    return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
-                });
-            }
-        });
+    useEffect(() => {
+        refreshChat();
     }, [account, recipient]);
 
     const connectWallet = async () => {
@@ -48,9 +63,18 @@ export default function ChatApp() {
     const sendMessage = () => {
         if (!message.trim() || !recipient.trim()) return;
         const chatKey = `web3chat-${account}-${recipient}`;
+        const reverseChatKey = `web3chat-${recipient}-${account}`;
         const newMessage = { sender: account, recipient, text: message, timestamp: Date.now() };
+        
         gun.get(chatKey).set(newMessage);
+        gun.get(reverseChatKey).set(newMessage);
         setMessage("");
+    };
+
+    const saveContact = () => {
+        if (!recipient.trim() || contacts.includes(recipient)) return;
+        gun.get(`contacts-${account}`).set(recipient);
+        setContacts(prev => [...prev, recipient]);
     };
 
     const clearChat = () => {
@@ -66,6 +90,7 @@ export default function ChatApp() {
                     <div className="flex items-center justify-between p-4 bg-gray-700 rounded-t-lg">
                         <h1 className="text-xl font-bold">Web3 Chat</h1>
                         <button className="text-red-400 text-sm hover:text-red-600" onClick={clearChat}>Hapus Chat</button>
+                        <button className="text-blue-400 text-sm hover:text-blue-600 ml-4" onClick={refreshChat}>Refresh</button>
                     </div>
                     <div className="p-4">
                         <input 
@@ -75,6 +100,17 @@ export default function ChatApp() {
                             value={recipient}
                             onChange={(e) => setRecipient(e.target.value)}
                         />
+                        <button className="w-full p-2 bg-green-600 rounded mt-2" onClick={saveContact}>Simpan Kontak</button>
+                    </div>
+                    <div className="p-4">
+                        <h2 className="text-lg font-bold mb-2">Kontak Tersimpan</h2>
+                        <ul className="space-y-2">
+                            {contacts.map((contact, index) => (
+                                <li key={index} className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onClick={() => setRecipient(contact)}>
+                                    {contact}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                     <div className="flex flex-col flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900">
                         {messages.map((msg, index) => (
