@@ -18,65 +18,83 @@ export default function ChatApp() {
     useEffect(() => {
         if (!account) return;
         const contactsKey = `contacts-${account}`;
+        const storedContacts = JSON.parse(localStorage.getItem(contactsKey)) || [];
+        setContacts(storedContacts);
         gun.get(contactsKey).map().on((contact) => {
             if (contact && !contacts.some(c => c.address === contact.address)) {
-                setContacts(prev => [...prev, contact]);
-                localStorage.setItem(contactsKey, JSON.stringify([...contacts, contact]));
+                setContacts(prev => {
+                    const updatedContacts = [...prev, contact];
+                    localStorage.setItem(contactsKey, JSON.stringify(updatedContacts));
+                    return updatedContacts;
+                });
             }
         });
-    }, [account]);
+    }, [account, contacts]);
 
     useEffect(() => {
         if (!account || !recipient) return;
         const chatKey = `chat-${account}-${recipient}`;
-        setMessages([]);
+        const storedMessages = JSON.parse(localStorage.getItem(chatKey)) || [];
+        setMessages(storedMessages);
         gun.get(chatKey).map().on((msg) => {
             if (msg && msg.text) {
-                setMessages(prev => [...prev, msg].sort((a, b) => a.timestamp - b.timestamp));
-                localStorage.setItem(chatKey, JSON.stringify([...messages, msg]));
+                setMessages(prev => {
+                    const updatedMessages = [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
+                    localStorage.setItem(chatKey, JSON.stringify(updatedMessages));
+                    return updatedMessages;
+                });
             }
         });
-    }, [account, recipient]);
+    }, [account, recipient, messages]);
 
     const connectWallet = async () => {
         if (window.ethereum) {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const accounts = await provider.send("eth_requestAccounts", []);
-            setAccount(accounts[0]);
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            setAccount(await signer.getAddress());
         } else {
             alert("MetaMask tidak terdeteksi");
         }
     };
 
-    const sendMessage = () => {
+    const sendMessage = useCallback(() => {
         if (!message.trim() || !recipient) return;
         const chatKey = `chat-${account}-${recipient}`;
         const newMessage = { sender: account, recipient, text: message, timestamp: Date.now() };
         gun.get(chatKey).set(newMessage);
         setMessage("");
-    };
+    }, [message, recipient, account]);
 
-    const saveContact = () => {
+    const saveContact = useCallback(() => {
         if (!recipient || !contactName.trim() || contacts.some(c => c.address === recipient)) return;
         const newContact = { address: recipient, name: contactName };
         gun.get(`contacts-${account}`).set(newContact);
-        setContacts(prev => [...prev, newContact]);
+        setContacts(prev => {
+            const updatedContacts = [...prev, newContact];
+            localStorage.setItem(`contacts-${account}`, JSON.stringify(updatedContacts));
+            return updatedContacts;
+        });
         setContactName("");
-    };
+    }, [recipient, contactName, contacts, account]);
 
-    const deleteContact = (contactAddress) => {
+    const deleteContact = useCallback((contactAddress) => {
         gun.get(`contacts-${account}`).map().once((contact, id) => {
             if (contact && contact.address === contactAddress) {
                 gun.get(`contacts-${account}`).get(id).put(null);
-                setContacts(prev => prev.filter(c => c.address !== contactAddress));
+                setContacts(prev => {
+                    const updatedContacts = prev.filter(c => c.address !== contactAddress);
+                    localStorage.setItem(`contacts-${account}`, JSON.stringify(updatedContacts));
+                    return updatedContacts;
+                });
             }
         });
-    };
+    }, [account, contacts]);
 
-    const clearChat = () => {
+    const clearChat = useCallback(() => {
         gun.get(`chat-${account}-${recipient}`).put(null);
         setMessages([]);
-    };
+        localStorage.removeItem(`chat-${account}-${recipient}`);
+    }, [account, recipient]);
 
     return (
         <div className="flex h-screen w-full bg-gray-900 text-white items-center justify-center">
