@@ -42,13 +42,18 @@ export default function ChatApp() {
         setMessage("");
     };
 
+    const clearChat = () => {
+        gun.get(`web3chat-${account}`).put(null);
+        setMessages([]);
+    };
+
     return (
         <div className="flex flex-col h-screen w-full bg-gray-900 text-white overflow-hidden">
             {account ? (
                 <div className="flex flex-col h-full max-w-md mx-auto border rounded-lg bg-gray-800 shadow-lg">
                     <div className="flex items-center justify-between p-4 bg-gray-700 rounded-t-lg">
                         <h1 className="text-xl font-bold">Web3 Chat</h1>
-                        <span className="text-green-400 text-sm">{account}</span>
+                        <button className="text-red-400 text-sm hover:text-red-600" onClick={clearChat}>Hapus Chat</button>
                     </div>
                     <div className="p-4">
                         <input 
