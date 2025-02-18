@@ -20,7 +20,7 @@ export default function ChatApp() {
             gun.get(chatKey).map().once((msg) => {
                 if (msg && msg.text) {
                     setMessages(prev => {
-                        const exists = prev.find(m => m.timestamp === msg.timestamp);
+                        const exists = prev.some(m => m.timestamp === msg.timestamp);
                         return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
                     });
                 }
@@ -28,7 +28,7 @@ export default function ChatApp() {
             gun.get(reverseChatKey).map().once((msg) => {
                 if (msg && msg.text) {
                     setMessages(prev => {
-                        const exists = prev.find(m => m.timestamp === msg.timestamp);
+                        const exists = prev.some(m => m.timestamp === msg.timestamp);
                         return exists ? prev : [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
                     });
                 }
@@ -39,7 +39,7 @@ export default function ChatApp() {
     useEffect(() => {
         if (!account) return;
         const contactsKey = `contacts-${account}`;
-        gun.get(contactsKey).map().on((contact, id) => {
+        gun.get(contactsKey).map().on((contact) => {
             if (contact && !contacts.includes(contact)) {
                 setContacts(prev => [...prev, contact]);
             }
@@ -69,6 +69,7 @@ export default function ChatApp() {
         gun.get(chatKey).set(newMessage);
         gun.get(reverseChatKey).set(newMessage);
         setMessage("");
+        refreshChat();
     };
 
     const saveContact = () => {
