@@ -1,5 +1,5 @@
 {
-  "name": "web3-chat",
+  "name": "web3-chat-app",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -8,16 +8,11 @@
     "start": "next start"
   },
   "dependencies": {
+    "ethers": "^5.7.2",
+    "gun": "^0.2023.923",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "ethers": "^5.7.2",
-    "gun": "^0.2020.1237",
-    "tailwindcss": "^3.2.4",
-    "postcss": "^8.4.14",
-    "autoprefixer": "^10.4.7"
-  },
-  "engines": {
-    "node": ">=18"
+    "tailwindcss": "^3.2.7"
   }
 }
