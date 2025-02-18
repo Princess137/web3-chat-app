@@ -8,11 +8,11 @@
     "start": "next start"
   },
   "dependencies": {
-    "ethers": "^5.7.2",
-    "gun": "^0.2023.923",
+    "ethers": "latest",
+    "gun": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "tailwindcss": "^3.2.7"
+    "tailwindcss": "latest"
   }
 }
